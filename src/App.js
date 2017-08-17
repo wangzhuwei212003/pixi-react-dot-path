@@ -94,10 +94,27 @@ class App extends Component {
       y: 350
     };
     const p6 = {
-      x: 480,
+      x: 1080,
       y: 350
     };
-    this.path = [p1, p2, p3, p4, p5, p6];
+    const p7 = {
+      x: 1080,
+      y: 250
+    };
+    const p8 = {
+      x: 780,
+      y: 250
+    };
+    const p9 = {
+      x: 780,
+      y: 150
+    };
+    const p10 = {
+      x: 950,
+      y: 150
+    };
+    this.path = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10];
+
     // draw line
     this.line = new PIXI.Graphics();
     this.line.lineStyle(4, 0xFFFFFF, 1);
@@ -108,7 +125,7 @@ class App extends Component {
     // this.line.lineTo(180, 350);
     // this.line.lineTo(480, 350);
     for (let i = 1; i < this.path.length; i++) {
-      this.line.lineTo(this.path[i].x, this.path[i].y)
+      //this.line.lineTo(this.path[i].x, this.path[i].y)
     }
     this.line.x = 64;
     this.line.y = 64;
@@ -118,12 +135,13 @@ class App extends Component {
 
     console.log(this.path);
 
-    this.initDots(30);
+    this.initDots(20);
 
     this.animate(); // 循环更新
   }
 
-  initDots(totalNum) {
+  //initDots(totalNum) {
+  initDots(gap) {
 
 
     let startPoint = this.path[0];
@@ -133,7 +151,7 @@ class App extends Component {
     let nowY = startPoint.y;
     let nextPointIndex = 1;
     let nextPoint = this.path[nextPointIndex];
-    this.addDot(nowX, nowY, nextPointIndex);
+    this.addDot(nowX, nowY, nextPointIndex); // 起点加一个点
 
     let totalPath = 0; // 算出路径总长度
     this.path.forEach((ele, index, array)=>{
@@ -146,21 +164,26 @@ class App extends Component {
           console.log('path 里面的点不是规则的点？')
         }
       }
+      console.log(index);
+      console.log(totalPath);
     });
     console.log(totalPath);
-    // let totalDots = ~~(totalPath/gap); // 根据gap算出所有点的个数
-    // console.log(totalDots);
 
-    let gap = totalPath/totalNum; // 根据gap算出所有点的个数
-    console.log(gap);
+    let totalNum = ~~(totalPath/gap); // 根据gap算出所有点的个数
+    console.log(totalNum);
 
+    // let gap = totalPath/totalNum; // 根据所有点的个数 算出 gap
+    // console.log(gap);
+
+    console.log(`start init ${totalNum} dots`);
     for (let i = 1; i < totalNum; i += 1) {
       // 算出每一个 dot 的x y，对应的下一个目标拐点，然后用 add cart。
       // 第一个点是起点。
-
       if (nowX === nextPoint.x) {
-        //console.log(`判断为在${nowX}和${nextPoint.x}之间，y方向变化`); // 这个判断是错误的，这个x相同应该是y方向在变化
-        //console.log(`第${i}个点`);
+        console.log(`now X Y: ${nowX} ${nowY}`);
+        console.log(nextPoint); // 这个判断是错误的，这个x相同应该是y方向在变化
+        console.log(`判断为在${nowX}和${nextPoint.x}之间，y方向变化`); // 这个判断是错误的，这个x相同应该是y方向在变化
+        console.log(`第${i}个点`);
         if (nextPoint.y - nowY  > 0 && nextPoint.y - nowY > gap) {
           nowY += gap;
           this.addDot(nowX, nowY, nextPointIndex);
@@ -173,7 +196,7 @@ class App extends Component {
           const gapRemain = gap - Math.abs(nowY - nextPoint.y);
 
           // console.log(newIndex);
-          // console.log(this.path[newIndex].x);
+          console.log(this.path[newIndex].x);
           // console.log(nextPoint.x);
           // console.log(gapRemain);
 
@@ -204,7 +227,7 @@ class App extends Component {
               nextPoint = this.path[newIndex];
               nextPointIndex = newIndex;
             }else{
-              // console.log('gap 太大 或者是 拐点太密');
+              console.log('gap 太大 或者是 拐点太密');
               // console.log('todo，gap横跨2个及2个以上的拐点');
               nowY = nextPoint.y;
               nowX = nextPoint.x;
@@ -212,8 +235,10 @@ class App extends Component {
           }
         }
       } else if (nowY === nextPoint.y) {
-        // console.log(`判断为在${nowY}和${nextPoint.y}点之间，x方向变化`);
-        // console.log(`第${i}个点`);
+        console.log(`now X Y: ${nowX} ${nowY}`);
+        console.log(nextPoint);
+        console.log(`判断为在${nowY}和${nextPoint.y}点之间，x方向变化`);
+        console.log(`第${i}个点`);
         if (nextPoint.x - nowX  > 0 && nextPoint.x - nowX > gap) {
           nowX += gap;
           this.addDot(nowX, nowY, nextPointIndex);
@@ -227,6 +252,8 @@ class App extends Component {
 
           // console.log(newIndex);
           // console.log(gapRemain);
+          console.log(this.path[newIndex]);
+          console.log(nextPoint);
 
           if(newIndex === this.path.length){
             // 如果超了，整个的 init 都可以 return 了。
@@ -241,14 +268,14 @@ class App extends Component {
               // console.log(nowX);
               // console.log(nowY);
 
-            } else if (this.path[newIndex].y - nextPoint.y < 0 && this.path[newIndex].y - nextPoint.y > gapRemain) {
+            } else if (this.path[newIndex].y - nextPoint.y < 0 && nextPoint.y - this.path[newIndex].y> gapRemain) {
               nowX = nextPoint.x;
               nowY -= gapRemain;
               this.addDot(nowX, nowY, newIndex);
               nextPoint = this.path[newIndex];
               nextPointIndex = newIndex;
             }else{
-              // console.log('gap 太大 或者是 拐点太密');
+              console.log('gap 太大 或者是 拐点太密');
               // console.log('todo，gap横跨2个及2个以上的拐点');
               nowY = nextPoint.y;
               nowX = nextPoint.x;
@@ -260,6 +287,7 @@ class App extends Component {
 
   }
 
+  // 在 initDots 里面添加 dot
   addDot(x, y, goalIndex) {
     // let dot = new PIXI.Sprite(this.dotTexture);
     // console.log('dot',dot);
@@ -283,7 +311,7 @@ class App extends Component {
     this.setState({
       dotsCurGoal:preDotCurGoal,
       dots: preDot
-    }); // 在state里面保存每一个点的当前目标。
+    }); // 在state里面保存每一个点的当前目标, 以及当前的点的 pixi graphics。
 
     // console.log(this.state.dotsCurGoal);
     // console.log(this.state.dots);
@@ -324,7 +352,8 @@ class App extends Component {
     }
 
     this.renderer.render(this.stage);
-    this.frame = requestAnimationFrame(this.animate); // loop this function 60 per second
+    // this.frame = requestAnimationFrame(this.animate); // loop this function 60 per second
+    requestAnimationFrame(this.animate); // loop this function 60 per second
   }
 
   // 根据 index 更新一个点的位置, dots, dotsCurGoal. 这个函数可以说是用来分配下一个 goal 的。
@@ -339,7 +368,7 @@ class App extends Component {
     const goalY = this.state.dotsCurGoal[index].y;
 
     if(index ===1){
-      console.log(this.state.dotsCurGoal[index]);
+      //console.log(this.state.dotsCurGoal[index]);
     }
     //console.log(this.state.dotsCurGoal[index]);
     // 这里首先确定一个线速度
