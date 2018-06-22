@@ -11,7 +11,7 @@ class App extends Component {
 
   constructor(props) {
     super(props);
-    // bind animate function
+    // bind animate function 这个地方一定要有 bind，因为下面没有用箭头函数。
     this.animate = this.animate.bind(this);
     this.addDot = this.addDot.bind(this);
 
@@ -115,6 +115,13 @@ class App extends Component {
     };
     this.path = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10];
 
+    this.path.reduce((oldValue, newValue) => {
+      //self.drawTrack(key, newValue, oldValue);
+      console.log(oldValue, newValue);
+      return newValue
+    });
+
+    debugger;
     // draw line
     this.line = new PIXI.Graphics();
     this.line.lineStyle(4, 0xFFFFFF, 1);
@@ -134,12 +141,71 @@ class App extends Component {
     // draw path
 
     console.log(this.path);
+    this.pathData = [
+      {
+        x: -50,
+        y: 0
+      },{
+        x: 380,
+        y: 0
+      },{
+        x: 380,
+        y: 10
+      },{
+        x: 380,
+        y: 40
+      },{
+        x: 380,
+        y: 50
+      },{
+        x: 380,
+        y: 110
+      },{
+        x: 380,
+        y: 150
+      },{
+        x: 180,
+        y: 150
+      },{
+        x: 180,
+        y: 160
+      },{
+        x: 180,
+        y: 165
+      },{
+        x: 180,
+        y: 177
+      },{
+        x: 180,
+        y: 250
+      },{
+        x: 180,
+        y: 350
+      },{
+        x: 1080,
+        y: 350
+      },{
+        x: 1080,
+        y: 250
+      },{
+        x: 780,
+        y: 250
+      },{
+        x: 780,
+        y: 150
+      },{
+        x: 950,
+        y: 150
+      }
+    ];
+    this.findAnglePoint(this.pathData); // 根据一段机器人发来的pathData算出拐点。
 
     this.initDots(20);
 
     this.animate(); // 循环更新
   }
 
+  // initialize the first frame
   //initDots(totalNum) {
   initDots(gap) {
 
@@ -180,10 +246,10 @@ class App extends Component {
       // 算出每一个 dot 的x y，对应的下一个目标拐点，然后用 add cart。
       // 第一个点是起点。
       if (nowX === nextPoint.x) {
-        console.log(`now X Y: ${nowX} ${nowY}`);
-        console.log(nextPoint); // 这个判断是错误的，这个x相同应该是y方向在变化
-        console.log(`判断为在${nowX}和${nextPoint.x}之间，y方向变化`); // 这个判断是错误的，这个x相同应该是y方向在变化
-        console.log(`第${i}个点`);
+        // console.log(`now X Y: ${nowX} ${nowY}`);
+        // console.log(nextPoint); // 这个判断是错误的，这个x相同应该是y方向在变化
+        // console.log(`判断为在${nowX}和${nextPoint.x}之间，y方向变化`); // 这个判断是错误的，这个x相同应该是y方向在变化
+        // console.log(`第${i}个点`);
         if (nextPoint.y - nowY  > 0 && nextPoint.y - nowY > gap) {
           nowY += gap;
           this.addDot(nowX, nowY, nextPointIndex);
@@ -235,10 +301,10 @@ class App extends Component {
           }
         }
       } else if (nowY === nextPoint.y) {
-        console.log(`now X Y: ${nowX} ${nowY}`);
-        console.log(nextPoint);
-        console.log(`判断为在${nowY}和${nextPoint.y}点之间，x方向变化`);
-        console.log(`第${i}个点`);
+        // console.log(`now X Y: ${nowX} ${nowY}`);
+        // console.log(nextPoint);
+        // console.log(`判断为在${nowY}和${nextPoint.y}点之间，x方向变化`);
+        // console.log(`第${i}个点`);
         if (nextPoint.x - nowX  > 0 && nextPoint.x - nowX > gap) {
           nowX += gap;
           this.addDot(nowX, nowY, nextPointIndex);
@@ -287,7 +353,7 @@ class App extends Component {
 
   }
 
-  // 在 initDots 里面添加 dot
+  // 在 initDots 里面添加 dot, 更新state 以及 添加点到 pixi stage
   addDot(x, y, goalIndex) {
     // let dot = new PIXI.Sprite(this.dotTexture);
     // console.log('dot',dot);
@@ -317,6 +383,9 @@ class App extends Component {
     // console.log(this.state.dots);
     this.stage.addChild(circle); // 所谓的 addDot， 关键就是在这一步，添加dot到container里面去。
   }
+  // 有一个地方，就是我这些点只在 initDot 这里面 addChild 了，然后后面 update 都是直接在 this.state 里面更新的。
+  // 也就是说，这里的 addChild 相当于add了一个地址，然后后面我改this.state里面的这个地址的元素，该元素是依然已经 addChild 了。
+  // 所以 对应到 Robot Panel 里面，需要改变的 pixi 的元素就得 最好放在 this.state 里面。
 
   updateDotState(index, circle){
     let preDots =  this.state.dots;
@@ -435,6 +504,35 @@ class App extends Component {
       }
     }
   }
+
+  // 给出一串点，找出拐点
+  // 相邻的三个点，1、3两点x、y对应都不同，1、2两点相同的x或y坐标是拐点的坐标，另一坐标是第三点的x或y坐标。
+  // 首尾是算不出来的，直接push进去
+  findAnglePoint = (pathData)=>{
+    let result = [pathData[0]];
+    for(let i = 0;i < pathData.length - 2;i += 1){
+      const exist =  pathData[i].x !== pathData[i+2].x && pathData[i].y !== pathData[i+2].y;
+      if(!exist){
+        continue;
+      }else{
+        let anglePoint = {};
+        if(pathData[i].x === pathData[i+1].x){
+          console.log('拐点x坐标确定');
+          anglePoint.x = pathData[i].x;
+          anglePoint.y = pathData[i+2].y;
+        }else if(pathData[i].y === pathData[i+1].y){
+          console.log('拐点y坐标确定');
+          anglePoint.x = pathData[i+2].x;
+          anglePoint.y = pathData[i].y;
+        }
+        console.log(anglePoint);
+        result.push(anglePoint);
+      }
+    }
+    result.push(pathData[pathData.length - 1]);
+    console.log(result);
+    return result;
+  };
 
   render() {
     return (
